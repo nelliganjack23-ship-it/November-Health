@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1f2a37">
+  <title>November Health</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="top">
+    <h1>November Health</h1>
+    <div id="banner" class="banner" hidden></div>
+  </header>
+
+  <main id="view"><p class="muted center">Loading…</p></main>
+
+  <nav class="tabs" id="tabs">
+    <a href="#today" data-tab="today"><span>✅</span>Today</a>
+    <a href="#together" data-tab="together"><span>💑</span>Together</a>
+    <a href="#calendar" data-tab="calendar"><span>📅</span>Calendar</a>
+    <a href="#stats" data-tab="stats"><span>📈</span>Stats</a>
+    <a href="#dates" data-tab="dates"><span>🌙</span>Dates</a>
+    <a href="#settings" data-tab="settings"><span>⚙️</span>Settings</a>
+  </nav>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
