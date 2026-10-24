@@ -146,10 +146,14 @@ function viewToday() {
         </div>`;
       } else {
         const rule = `${g.compare === 'lte' ? '≤' : '≥'} ${esc(g.target)} ${esc(g.unit || '')}`;
-        html += `<div class="goal ${met ? 'met' : ''}">
+        html += `<div class="goal num ${met ? 'met' : ''}">
           <div class="grow"><div class="name">${esc(g.name)}</div><div class="pts">Goal ${rule} · ${g.points} pts</div></div>
-          <input type="number" inputmode="decimal" step="any" data-action="num" data-goal="${g.id}" value="${v ?? ''}" placeholder="0">
-          <span class="muted small">${esc(g.unit || '')}</span>
+          <div class="stepper">
+            <button data-action="step" data-goal="${g.id}" data-dir="-1" aria-label="Decrease">−</button>
+            <input type="number" inputmode="decimal" step="any" data-action="num" data-goal="${g.id}" value="${v ?? ''}" placeholder="–">
+            <button data-action="step" data-goal="${g.id}" data-dir="1" aria-label="Increase">+</button>
+          </div>
+          <div class="unit-row muted small">${esc(g.unit || '')}<button class="link" data-action="hit" data-goal="${g.id}">Set to goal</button></div>
         </div>`;
       }
     }
@@ -413,7 +417,7 @@ let renderQueued = false;
 function render() {
   if (renderQueued) return;
   renderQueued = true;
-  requestAnimationFrame(() => {
+  setTimeout(() => {
     renderQueued = false;
     // Don't wipe out a field the user is typing in; re-render after they leave it.
     const active = document.activeElement;
@@ -432,6 +436,17 @@ function render() {
     document.querySelectorAll('#tabs a').forEach(a => a.classList.toggle('on', a.dataset.tab === state.tab));
     for (const p of people()) document.documentElement.style.setProperty(`--${p.id}`, p.color);
   });
+}
+
+// How much the +/− buttons change a number goal, scaled to its target.
+function stepSize(goal) {
+  const t = Math.abs(Number(goal.target)) || 1;
+  if (t >= 5000) return 500;
+  if (t >= 1000) return 100;
+  if (t >= 100) return 10;
+  if (t >= 30) return 5;
+  if (!Number.isInteger(t) || /^(h|hr|hrs|hour|hours)$/i.test(goal.unit || '')) return 0.5;
+  return 1;
 }
 
 function saveLogValue(goalId, value) {
@@ -458,6 +473,13 @@ view.addEventListener('click', e => {
   } else if (a === 'toggle') {
     const cur = data.logs[`${state.me}_${state.date}`]?.values?.[el.dataset.goal];
     saveLogValue(el.dataset.goal, cur !== true);
+  } else if (a === 'step' || a === 'hit') {
+    const g = data.goals[el.dataset.goal];
+    const cur = data.logs[`${state.me}_${state.date}`]?.values?.[el.dataset.goal];
+    const next = a === 'hit'
+      ? Number(g.target)
+      : Math.max(0, +((Number(cur) || 0) + Number(el.dataset.dir) * stepSize(g)).toFixed(2));
+    saveLogValue(el.dataset.goal, next);
   } else if (a === 'openday') {
     state.me = el.dataset.id;
     state.date = el.dataset.date;
@@ -516,6 +538,15 @@ view.addEventListener('submit', e => {
     put('dateIdeas', newId(), { text: f.text.trim(), done: false, created: Date.now() });
   }
   if (kind !== 'person' && kind !== 'settings' && !id) form.reset();
+});
+
+// Select the whole number on tap so typing replaces it, and let Enter finish the edit.
+view.addEventListener('focusin', e => {
+  if (e.target.matches('input[type=number]')) setTimeout(() => e.target.select(), 0);
+});
+
+view.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.matches('input[data-action=num]')) e.target.blur();
 });
 
 window.addEventListener('hashchange', () => {
